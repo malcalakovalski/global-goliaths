@@ -20,7 +20,6 @@ get_employment_share <- function(){
     select(-all_countries)
 }
 
-df$Label  <- with(df, reorder(Label, Percent))
 
 get_employment_share() %>%
   pivot_longer(-year) %>%
