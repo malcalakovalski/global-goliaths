@@ -1,0 +1,388 @@
+---
+title: "Presentation Ninja"
+subtitle: "⚔<br/>with xaringan"
+author: "Yihui Xie"
+institute: "RStudio, PBC"
+date: "2016/12/12 (updated: `r Sys.Date()`)"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+background-image: url(https://upload.wikimedia.org/wikipedia/commons/b/be/Sharingan_triple.svg)
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+
+???
+
+Image credit: [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Sharingan_triple.svg)
+
+---
+class: center, middle
+
+# xaringan
+
+### /ʃaː.'riŋ.ɡan/
+
+---
+class: inverse, center, middle
+
+# Get Started
+
+---
+
+# Hello World
+
+Install the **xaringan** package from [Github](https://github.com/yihui/xaringan):
+
+```{r eval=FALSE, tidy=FALSE}
+remotes::install_github("yihui/xaringan")
+```
+
+```{r packages, include = FALSE}
+librarian::shelf('tidyverse', 'glue', 'tsibble', 'readxl', 'janitor', 'ggthemes', 'ggtext','ggrepel', 'RColorBrewer', 'nfa', 'sysfonts', 'showtext', 'readxl', 'scales', 'gghutchins', 'directlabels', 'gghighlight', 'gglaplot')
+conflicted::conflict_prefer('lag', 'dplyr')
+conflicted::conflict_prefer('filter', 'dplyr')
+conflicted::conflict_prefer('geom_line', 'ggplot2')
+conflicted::conflict_prefer('geom_col', 'ggplot2')
+conflicted::conflict_prefer('geom_text', 'ggplot2')
+conflicted::conflict_prefer('geom_point', 'ggplot2')
+
+ggplot2::theme_set(gghutchins::theme_hutchins())
+
+ caption_text <- '<br>**Note:** The original figure appears in *Global Goliaths*, Brookings Institution Press, 2021. <br>
+**Source**: Bureau of Economic Analysis.'
+
+```
+
+## Figure 1
+
+```{r fig1, fig.width = 9 , out.width="100%", fig.asp = 0.8}
+mnc_share <-
+  readxl::read_xlsx("data/role-mnc.xlsx")
+
+p1 <- mnc_share %>% 
+  pivot_longer(where(is.numeric)) %>% 
+  ggplot(aes(y = reorder(name, value),
+             x = value,
+             
+             fill = mnc_type)) +
+  geom_col(width = 0.7) +
+  stat_summary(fun = sum, aes(x = value + 0.03, label = scales::percent(after_stat(x), accuracy = 0.1), group = name), geom = "text", position = position_dodge(0.9), family = 'Roboto', face = 'bold') 
+
+p1 +
+  scale_x_continuous(
+    name = "",
+    labels = scales::percent_format(),
+    limits = c(0, 1)
+  ) +
+  scale_y_discrete(name = '') +
+   scale_fill_hutchins(
+    'qual',
+    rev = TRUE,
+    name = '',
+    labels = c("U.S. arms of foreign-headquartered firms", "U.S. parents")
+  )  +
+
+    guides(fill = guide_legend(reverse = T, nrow = 1)) +
+  
+
+    labs(
+    title = "**Multinationals are major players in the U.S. economy**",
+    subtitle = "Multinationals' share of economic activity in 2017, by category<br>",
+    caption = '<br>**Note:** The original figure appears in *Global Goliaths*, Brookings Institution Press, 2021. <br>
+**Source**: Bureau of Economic Analysis, National Income and Product Accounts; National Science Foundation, Science and Engineering Indicators; Census Bureau Annual Capital Expenditure Survey'
+  ) +
+   theme(legend.title = element_blank(), 
+     legend.position = c(-0.375,1.025), 
+     legend.justification='left',
+     legend.box = "horizontal",
+     legend.margin = margin(0),
+     legend.key = element_blank(),
+     legend.direction = "horizontal",
+     plot.title.position = "plot",
+     plot.caption.position =  "plot",
+     plot.caption = element_textbox_simple(hjust = 0)
+     )
+
+
+```
+
+
+```{r remedy03,fig.asp=1.25, out.width='90%'}
+df <- readxl::read_xlsx("data/employment_share.xlsx") %>%
+    janitor::clean_names() %>%
+    rename_with( ~snakecase::to_title_case(.),
+                 ends_with('income')) %>% 
+    fill(everything(), .direction = "up") %>%
+    mutate(
+      across(
+        .cols = !year & !all_countries,
+        .fns = ~ .x / all_countries,
+        .names = "{.col}"
+      )
+    ) %>%
+    select(-all_countries) %>%
+    pivot_longer(-year) 
+
+
+  ggplot(df) +
+  geom_line(aes(x = year, y = value, group = name), alpha = 0.5) +
+    coord_cartesian(clip = 'off') +
+geom_dl(aes(x = year, y = value, label = name),method = list(dl.trans(x = x + .2),'last.bumpup'), cex = 0.8)+
+  geom_line(df %>% filter(name == 'High Income'),
+           mapping =  aes(x = year, y = value), 
+           color = '#003A79', size = 1.3) +
+       scale_x_continuous(
+      name = "",
+      breaks = seq(1982, 2018, 5),
+      limits  = c(1982, 2020),
+      expand = c(0.1, 5)
+    ) +
+    scale_y_continuous(
+      name = "",
+      labels = scales::percent,
+      limits = c(0, 0.8),
+      breaks = seq(0, 0.8, 0.15)
+    ) +
+    labs(
+      title = "Most MNC employees are in high wage economies",
+      subtitle = "Share of U.S. MNC foreign affiliate employment by host country income",
+      caption = "**Source**: Bureau of Economic Analysis."
+    ) 
+  
+  
+```
+
+
+
+## Figure 3
+
+
+## Figure 3 
+
+```{r }
+df <-
+  readxl::read_xlsx("data/fig_3.xlsx") %>% 
+  clean_names() 
+
+
+
+
+df <- 
+  df %>% 
+  mutate(
+    across(
+      -c('date', 'total'),
+      ~ .x / total
+    )
+  ) %>% 
+  select(-total, -other) %>% 
+  pivot_longer(-date) %>% 
+  mutate(name = factor(name,
+                       levels = c(
+                         "asia",
+                         "canada",
+                         "europe",
+                         "latin_am"
+                       ),
+                       labels = c(
+                         "Asia",
+                         "Canada",
+                         "Europe",
+                         "Latin America"
+                       )
+  ))
+df_minus <- df %>% mutate(name2 = name) %>% select(-name)
+
+df %>%  ggplot(aes(x = date, y = value, group = name)) +
+   geom_line(alpha = 2, size = 1.5, aes(group = name), color = hutchins_colors['green']) +
+ #  geom_line(data = df_minus, aes(x = date, y = value, group = name2), color = 'grey', alpha = 0.4, size = 1.1) +
+   theme_hutchins() +
+    coord_cartesian(clip = 'off') +
+   labs(title = "Multinational's markets have shifted toward Asia",
+        subtitle = 'Share of U.S. MNC Foreign Affiliate Sales, by Affiliate Location',
+        caption = '**Note**: Global Goliaths. <br>
+        **Source:** Bureau of Economic Analysis') +
+   scale_y_continuous(name = '', labels = scales::percent_format(),  limits = c(0,0.65),
+                      breaks = seq(0, 0.65, 0.1)) +
+    scale_x_continuous(name = '',
+                       limits = c(1982, 2017),
+                       breaks = seq(1982, 2017, 5),
+                         expand = c(0.25, 0.25)) +
+        geom_dl(aes(label = name), method = list(dl.trans(x = x + .2),'last.bumpup'), cex = 0.8) +
+     gghighlight(name == 'Asia',
+                  use_group_by = FALSE,
+                  use_direct_label = FALSE,
+                  unhighlighted_params = list(size = 0.2, alpha = 0.9, color = 'gray50'))
+  
+   
+
+ 
+```
+
+## Figure 4
+
+
+```{r}
+readxl::read_xlsx('data/data.xlsx', sheet = 'figure 4') %>% 
+  summarize(date, 
+            `Employment` = parent_employment / total_employment,
+            `Capital` = parent_capital_expenditures /total_capital_expenditures) %>% 
+  
+  pivot_longer(-date) %>% 
+  mutate(label = if_else(date == max(date), as.character(name), NA_character_)) %>%
+
+  ggplot(aes(x = date, y = value, color = name)) +
+  geom_line(size = 1.4, alpha = 0.8) +
+  scale_x_continuous(name = '', limits = c(1981, 2020), breaks = seq(1982, 2017, 5),
+                       expand = c(0.2, 0.1)) +
+  scale_color_hutchins() +
+  scale_y_continuous(name = '',labels = scales::percent_format(), 
+                     limits = c(0,0.6), breaks = seq(0, 1, 0.1)) +
+    coord_cartesian(clip = 'off') +
+  labs(title = 'U.S. operations of U.S. Multinationals have grown at the same pace as the economy',
+       subtitle = 'U.S. MNC Parent Share of U.S. Activity',
+       caption = caption_text) +
+  geom_dl(aes(label = name), method = list(dl.trans(x = x + .2),'last.bumpup'), cex = 0.8,
+          color = 'black') +
+  theme(legend.position = 'none')
+  
+```
+
+## Figure 5
+
+```{r fig5}
+read_xlsx('data/data.xlsx', sheet = 'figure 5') %>% 
+  summarize(date,
+            share = parents / total) %>% 
+  pivot_longer(share) %>% 
+  ggplot(aes(x = date, y = value, label = value)) +
+  geom_line(size = 1.1, alpha =  0.8, color = hutchins_colors['brookings blue']) +
+  
+  scale_y_continuous(name = '', labels = scales::percent_format(), limits = c(0.55, 0.85), breaks = seq(0.55, 0.85, 0.05)
+                 ) +
+  labs(title ='U.S. multinationals still do most of their business R&D spending domestically',
+       subtitle = 'U.S. Parent Share of U.S. Business R&D',
+       caption = caption_text) +
+  scale_x_continuous(name = '', limits = c(1989, 2018), breaks = seq(1989, 2017, 5),
+                       expand = c(0.1, 0.1)) 
+
+```
+
+## Figure 6
+
+```{r fig6}
+get_label <- function(df){
+  df %>% 
+    mutate(label = if_else(date == max(date), as.character(name), NA_character_))
+}
+
+
+add_label <- function(){
+    geom_label_repel(aes(label = label),
+                  nudge_x = 1,
+                  na.rm = TRUE)
+}
+read_xlsx('data/data.xlsx', sheet = 'figure 6') %>% 
+  summarize(date,
+            Exports = exports / all_exports,
+            Imports = imports /all_imports) %>% 
+  pivot_longer(-date) %>% 
+  ggplot(aes(x = date, y = value, color = name)) +
+  geom_line(size = 1.3, alpha = 0.75) +
+  scale_color_manual(values = c(hutchins_colors['vivid blue'] ,"#FF9E1B" )) +
+  scale_y_continuous(labels = percent_format(),
+                     name = '',
+                     limits = c(0.25, 0.45),
+                     breaks = seq(0.25, 0.5, 0.05)) +
+  geom_dl(aes(label = name), method = 'last.points', color = 'black') +
+  labs(title = 'Intra-company trade has grown at the same pace as overall internationanl trade',
+       subtitle = 'Related party share of U.S. imports and exports',
+       caption = caption_text) +
+  scale_x_continuous(name = '', limits = c(1981, 2020), breaks = seq(1982, 2017, 5),
+                       expand = c(0.1, 0.1)) +
+  theme(
+    legend.text = element_blank(),
+    legend.position = 'none'
+  )
+
+
+```
+
+## Figure 7
+
+```{r remedy07, out.width='80%'}
+read_xlsx('data/data.xlsx', sheet = 'figure 7') %>% 
+  pivot_longer(investment) %>% 
+  get_label() %>% 
+  ggplot(aes(x = date, y = value,  color = name)) +
+  geom_line(size = 1.1,alpha=0.5)+
+  scale_color_hutchins(pal = 'mixed') +
+  scale_y_continuous(labels = percent_format(), limits = c(0, 0.35), breaks = seq(0, 0.35, 0.05)) +
+  scale_x_continuous(limits = c(1982, 2017), breaks = seq(1982, 2017, 5)) +
+  labs(title = "A Growing Share of Multinational's Profits Come From Abroad",subtitle = 'U.S. Direct Investment Abroad Equity Income Share of U.S. Worldwide Corporate Profits',
+       caption = caption_text) +
+  theme(legend.position =  'none')
+
+
+```
+
+
+
+```{r fig8}
+read_xlsx('data/data.xlsx', sheet = 'figure 8') %>% 
+  mutate(label = glue::glue('{100 * round(value, 3)}%')) %>% 
+  ggplot(aes(x = reorder(name, value), y = value )) +
+  geom_col(fill = hutchins_colors['gray'], alpha = 1, width = 0.7) +
+  scale_fill_hutchins() +
+  scale_y_continuous(labels = percent_format(accuracy = 1),
+                     limits = c(0,0.55),
+                     breaks = seq(0,0.55, 0.1))+
+  coord_flip() +
+  guides(fill = guide_legend(reverse = T)) +
+  labs(
+       title = "Percentage of U.S. MNCs' Foreign Activity in Tax Havens",
+       caption = caption_text) +
+  geom_dl(aes(label = label), hjust = -0.25, method = list(dl.trans(x = x + .2),'last.bumpup'), cex = 0.8,
+          color = 'black')
+```
+
+```{r}
+read_xlsx('data/data.xlsx', 'figure 9') %>% 
+  summarize(date,
+            share = tax_haven / total) %>%
+  mutate(date = as.character(date)) %>%
+pivot_longer(share) %>% 
+  ggplot(aes(x = date, y = value)) +
+  geom_col(fill=hutchins_colors['brookings blue'], width = 0.7) + 
+  scale_y_continuous(label  = percent_format(),
+                     limits = c(0,0.6),
+                     breaks = seq(0,0.6, 0.1)) +
+  labs(title = "Multinational's tax rates have declined over time and use of tax havens has increased<br>" ,
+       subtitle = 'Share of U.S. Multinational Parent Firms with Affiliates in Tax Havens',
+       caption = '**Source:** Bureau of Economic Analysis. <br>
+       **Note:** Tax Haven countries are those identified in Hines Jr, James R. "Treasure islands." Journal of Economic Perspectives 24.4 (2010): 103-26, with the exception of the Cook Islands, the UK Channel Islands, and Niue, which cannot be separately identified in the BEA data.') +
+  theme(
+    plot.caption = element_textbox_simple(color = '#666666')
+  )
+
+```
+
+```{r}
+read_xlsx('data/data.xlsx', sheet = 'figure 10') %>%
+  summarize(date, traditional, non_traditional) %>%
+  pivot_longer(-date) %>%
+  ggplot(aes(x = date, y = value, fill = name,  group  = name)) +
+  geom_area(position = 'stack') +
+  scale_fill_hutchins(rev = TRUE, labels =  c('Non-traditional Hubs', 'Traditional Hubs')) +
+  scale_y_continuous(labels = dollar_format()) +
+  labs(title = 'R&D expenditures of US Multinationals foreign affiliates') 
+
+```

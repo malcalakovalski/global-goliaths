@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Presentation Ninja</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Yihui Xie" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Presentation Ninja
+## ⚔<br/>with xaringan
+### Yihui Xie
+### RStudio, PBC
+### 2016/12/12 (updated: 2021-03-22)
+
+---
+
+
+background-image: url(https://upload.wikimedia.org/wikipedia/commons/b/be/Sharingan_triple.svg)
+
+
+
+???
+
+Image credit: [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Sharingan_triple.svg)
+
+---
+class: center, middle
+
+# xaringan
+
+### /ʃaː.'riŋ.ɡan/
+
+---
+class: inverse, center, middle
+
+# Get Started
+
+---
+
+# Hello World
+
+Install the **xaringan** package from [Github](https://github.com/yihui/xaringan):
+
+
+```r
+remotes::install_github("yihui/xaringan")
+```
+
+
+
+## Figure 1
+
+
+```r
+mnc_share &lt;-
+  readxl::read_xlsx("data/role-mnc.xlsx")
+
+p1 &lt;- mnc_share %&gt;% 
+  pivot_longer(where(is.numeric)) %&gt;% 
+  ggplot(aes(y = reorder(name, value),
+             x = value,
+             
+             fill = mnc_type)) +
+  geom_col(width = 0.7) +
+  stat_summary(fun = sum, aes(x = value + 0.03, label = scales::percent(after_stat(x), accuracy = 0.1), group = name), geom = "text", position = position_dodge(0.9), family = 'Roboto', face = 'bold') 
+```
+
+```
+## Warning: Ignoring unknown parameters: face
+```
+
+```r
+p1 +
+  scale_x_continuous(
+    name = "",
+    labels = scales::percent_format(),
+    limits = c(0, 1)
+  ) +
+  scale_y_discrete(name = '') +
+   scale_fill_hutchins(
+    'qual',
+    rev = TRUE,
+    name = '',
+    labels = c("U.S. arms of foreign-headquartered firms", "U.S. parents")
+  )  +
+
+    guides(fill = guide_legend(reverse = T, nrow = 1)) +
+  
+
+    labs(
+    title = "**Multinationals are major players in the U.S. economy**",
+    subtitle = "Multinationals' share of economic activity in 2017, by category&lt;br&gt;",
+    caption = '&lt;br&gt;**Note:** The original figure appears in *Global Goliaths*, Brookings Institution Press, 2021. &lt;br&gt;
+**Source**: Bureau of Economic Analysis, National Income and Product Accounts; National Science Foundation, Science and Engineering Indicators; Census Bureau Annual Capital Expenditure Survey'
+  ) +
+   theme(legend.title = element_blank(), 
+     legend.position = c(-0.375,1.025), 
+     legend.justification='left',
+     legend.box = "horizontal",
+     legend.margin = margin(0),
+     legend.key = element_blank(),
+     legend.direction = "horizontal",
+     plot.title.position = "plot",
+     plot.caption.position =  "plot",
+     plot.caption = element_textbox_simple(hjust = 0)
+     )
+```
+
+&lt;img src="ninja_files/figure-html/fig1-1.png" width="100%" /&gt;
+
+
+
+```r
+df &lt;- readxl::read_xlsx("data/employment_share.xlsx") %&gt;%
+    janitor::clean_names() %&gt;%
+    rename_with( ~snakecase::to_title_case(.),
+                 ends_with('income')) %&gt;% 
+    fill(everything(), .direction = "up") %&gt;%
+    mutate(
+      across(
+        .cols = !year &amp; !all_countries,
+        .fns = ~ .x / all_countries,
+        .names = "{.col}"
+      )
+    ) %&gt;%
+    select(-all_countries) %&gt;%
+    pivot_longer(-year) 
+
+
+  ggplot(df) +
+  geom_line(aes(x = year, y = value, group = name), alpha = 0.5) +
+    coord_cartesian(clip = 'off') +
+geom_dl(aes(x = year, y = value, label = name),method = list(dl.trans(x = x + .2),'last.bumpup'), cex = 0.8)+
+  geom_line(df %&gt;% filter(name == 'High Income'),
+           mapping =  aes(x = year, y = value), 
+           color = '#003A79', size = 1.3) +
+       scale_x_continuous(
+      name = "",
+      breaks = seq(1982, 2018, 5),
+      limits  = c(1982, 2020),
+      expand = c(0.1, 5)
+    ) +
+    scale_y_continuous(
+      name = "",
+      labels = scales::percent,
+      limits = c(0, 0.8),
+      breaks = seq(0, 0.8, 0.15)
+    ) +
+    labs(
+      title = "Most MNC employees are in high wage economies",
+      subtitle = "Share of U.S. MNC foreign affiliate employment by host country income",
+      caption = "**Source**: Bureau of Economic Analysis."
+    ) 
+```
+
+&lt;img src="ninja_files/figure-html/remedy03-1.png" width="90%" /&gt;
+
+
+
+## Figure 3
+
+
+## Figure 3 
+
+
+```r
+df &lt;-
+  readxl::read_xlsx("data/fig_3.xlsx") %&gt;% 
+  clean_names() 
+
+
+
+
+df &lt;- 
+  df %&gt;% 
+  mutate(
+    across(
+      -c('date', 'total'),
+      ~ .x / total
+    )
+  ) %&gt;% 
+  select(-total, -other) %&gt;% 
+  pivot_longer(-date) %&gt;% 
+  mutate(name = factor(name,
+                       levels = c(
+                         "asia",
+                         "canada",
+                         "europe",
+                         "latin_am"
+                       ),
+                       labels = c(
+                         "Asia",
+                         "Canada",
+                         "Europe",
+                         "Latin America"
+                       )
+  ))
+df_minus &lt;- df %&gt;% mutate(name2 = name) %&gt;% select(-name)
+
+df %&gt;%  ggplot(aes(x = date, y = value, group = name)) +
+   geom_line(alpha = 2, size = 1.5, aes(group = name), color = hutchins_colors['green']) +
+ #  geom_line(data = df_minus, aes(x = date, y = value, group = name2), color = 'grey', alpha = 0.4, size = 1.1) +
+   theme_hutchins() +
+    coord_cartesian(clip = 'off') +
+   labs(title = "Multinational's markets have shifted toward Asia",
+        subtitle = 'Share of U.S. MNC Foreign Affiliate Sales, by Affiliate Location',
+        caption = '**Note**: Global Goliaths. &lt;br&gt;
+        **Source:** Bureau of Economic Analysis') +
+   scale_y_continuous(name = '', labels = scales::percent_format(),  limits = c(0,0.65),
+                      breaks = seq(0, 0.65, 0.1)) +
+    scale_x_continuous(name = '',
+                       limits = c(1982, 2017),
+                       breaks = seq(1982, 2017, 5),
+                         expand = c(0.25, 0.25)) +
+        geom_dl(aes(label = name), method = list(dl.trans(x = x + .2),'last.bumpup'), cex = 0.8) +
+     gghighlight(name == 'Asia',
+                  use_group_by = FALSE,
+                  use_direct_label = FALSE,
+                  unhighlighted_params = list(size = 0.2, alpha = 0.9, color = 'gray50'))
+```
+
+![](ninja_files/figure-html/unnamed-chunk-2-1.png)&lt;!-- --&gt;
+
+## Figure 4
+
+
+
+```r
+readxl::read_xlsx('data/data.xlsx', sheet = 'figure 4') %&gt;% 
+  summarize(date, 
+            `Employment` = parent_employment / total_employment,
+            `Capital` = parent_capital_expenditures /total_capital_expenditures) %&gt;% 
+  
+  pivot_longer(-date) %&gt;% 
+  mutate(label = if_else(date == max(date), as.character(name), NA_character_)) %&gt;%
+
+  ggplot(aes(x = date, y = value, color = name)) +
+  geom_line(size = 1.4, alpha = 0.8) +
+  scale_x_continuous(name = '', limits = c(1981, 2020), breaks = seq(1982, 2017, 5),
+                       expand = c(0.2, 0.1)) +
+  scale_color_hutchins() +
+  scale_y_continuous(name = '',labels = scales::percent_format(), 
+                     limits = c(0,0.6), breaks = seq(0, 1, 0.1)) +
+    coord_cartesian(clip = 'off') +
+  labs(title = 'U.S. operations of U.S. Multinationals have grown at the same pace as the economy',
+       subtitle = 'U.S. MNC Parent Share of U.S. Activity',
+       caption = caption_text) +
+  geom_dl(aes(label = name), method = list(dl.trans(x = x + .2),'last.bumpup'), cex = 0.8,
+          color = 'black') +
+  theme(legend.position = 'none')
+```
+
+![](ninja_files/figure-html/unnamed-chunk-3-1.png)&lt;!-- --&gt;
+
+## Figure 5
+
+
+```r
+read_xlsx('data/data.xlsx', sheet = 'figure 5') %&gt;% 
+  summarize(date,
+            share = parents / total) %&gt;% 
+  pivot_longer(share) %&gt;% 
+  ggplot(aes(x = date, y = value, label = value)) +
+  geom_line(size = 1.1, alpha =  0.8, color = hutchins_colors['brookings blue']) +
+  
+  scale_y_continuous(name = '', labels = scales::percent_format(), limits = c(0.55, 0.85), breaks = seq(0.55, 0.85, 0.05)
+                 ) +
+  labs(title ='U.S. multinationals still do most of their business R&amp;D spending domestically',
+       subtitle = 'U.S. Parent Share of U.S. Business R&amp;D',
+       caption = caption_text) +
+  scale_x_continuous(name = '', limits = c(1989, 2018), breaks = seq(1989, 2017, 5),
+                       expand = c(0.1, 0.1)) 
+```
+
+![](ninja_files/figure-html/fig5-1.png)&lt;!-- --&gt;
+
+## Figure 6
+
+
+```r
+get_label &lt;- function(df){
+  df %&gt;% 
+    mutate(label = if_else(date == max(date), as.character(name), NA_character_))
+}
+
+
+add_label &lt;- function(){
+    geom_label_repel(aes(label = label),
+                  nudge_x = 1,
+                  na.rm = TRUE)
+}
+read_xlsx('data/data.xlsx', sheet = 'figure 6') %&gt;% 
+  summarize(date,
+            Exports = exports / all_exports,
+            Imports = imports /all_imports) %&gt;% 
+  pivot_longer(-date) %&gt;% 
+  ggplot(aes(x = date, y = value, color = name)) +
+  geom_line(size = 1.3, alpha = 0.75) +
+  scale_color_manual(values = c(hutchins_colors['vivid blue'] ,"#FF9E1B" )) +
+  scale_y_continuous(labels = percent_format(),
+                     name = '',
+                     limits = c(0.25, 0.45),
+                     breaks = seq(0.25, 0.5, 0.05)) +
+  geom_dl(aes(label = name), method = 'last.points', color = 'black') +
+  labs(title = 'Intra-company trade has grown at the same pace as overall internationanl trade',
+       subtitle = 'Related party share of U.S. imports and exports',
+       caption = caption_text) +
+  scale_x_continuous(name = '', limits = c(1981, 2020), breaks = seq(1982, 2017, 5),
+                       expand = c(0.1, 0.1)) +
+  theme(
+    legend.text = element_blank(),
+    legend.position = 'none'
+  )
+```
+
+![](ninja_files/figure-html/fig6-1.png)&lt;!-- --&gt;
+
+## Figure 7
+
+
+```r
+read_xlsx('data/data.xlsx', sheet = 'figure 7') %&gt;% 
+  pivot_longer(investment) %&gt;% 
+  get_label() %&gt;% 
+  ggplot(aes(x = date, y = value,  color = name)) +
+  geom_line(size = 1.1,alpha=0.5)+
+  scale_color_hutchins(pal = 'mixed') +
+  scale_y_continuous(labels = percent_format(), limits = c(0, 0.35), breaks = seq(0, 0.35, 0.05)) +
+  scale_x_continuous(limits = c(1982, 2017), breaks = seq(1982, 2017, 5)) +
+  labs(title = "A Growing Share of Multinational's Profits Come From Abroad",subtitle = 'U.S. Direct Investment Abroad Equity Income Share of U.S. Worldwide Corporate Profits',
+       caption = caption_text) +
+  theme(legend.position =  'none')
+```
+
+&lt;img src="ninja_files/figure-html/remedy07-1.png" width="80%" /&gt;
+
+
+
+
+```r
+read_xlsx('data/data.xlsx', sheet = 'figure 8') %&gt;% 
+  mutate(label = glue::glue('{100 * round(value, 3)}%')) %&gt;% 
+  ggplot(aes(x = reorder(name, value), y = value )) +
+  geom_col(fill = hutchins_colors['gray'], alpha = 1, width = 0.7) +
+  scale_fill_hutchins() +
+  scale_y_continuous(labels = percent_format(accuracy = 1),
+                     limits = c(0,0.55),
+                     breaks = seq(0,0.55, 0.1))+
+  coord_flip() +
+  guides(fill = guide_legend(reverse = T)) +
+  labs(
+       title = "Percentage of U.S. MNCs' Foreign Activity in Tax Havens",
+       caption = caption_text) +
+  geom_dl(aes(label = label), hjust = -0.25, method = list(dl.trans(x = x + .2),'last.bumpup'), cex = 0.8,
+          color = 'black')
+```
+
+![](ninja_files/figure-html/fig8-1.png)&lt;!-- --&gt;
+
+
+```r
+read_xlsx('data/data.xlsx', 'figure 9') %&gt;% 
+  summarize(date,
+            share = tax_haven / total) %&gt;%
+  mutate(date = as.character(date)) %&gt;%
+pivot_longer(share) %&gt;% 
+  ggplot(aes(x = date, y = value)) +
+  geom_col(fill=hutchins_colors['brookings blue'], width = 0.7) + 
+  scale_y_continuous(label  = percent_format(),
+                     limits = c(0,0.6),
+                     breaks = seq(0,0.6, 0.1)) +
+  labs(title = "Multinational's tax rates have declined over time and use of tax havens has increased&lt;br&gt;" ,
+       subtitle = 'Share of U.S. Multinational Parent Firms with Affiliates in Tax Havens',
+       caption = '**Source:** Bureau of Economic Analysis. &lt;br&gt;
+       **Note:** Tax Haven countries are those identified in Hines Jr, James R. "Treasure islands." Journal of Economic Perspectives 24.4 (2010): 103-26, with the exception of the Cook Islands, the UK Channel Islands, and Niue, which cannot be separately identified in the BEA data.') +
+  theme(
+    plot.caption = element_textbox_simple(color = '#666666')
+  )
+```
+
+![](ninja_files/figure-html/unnamed-chunk-4-1.png)&lt;!-- --&gt;
+
+
+```r
+read_xlsx('data/data.xlsx', sheet = 'figure 10') %&gt;%
+  summarize(date, traditional, non_traditional) %&gt;%
+  pivot_longer(-date) %&gt;%
+  ggplot(aes(x = date, y = value, fill = name,  group  = name)) +
+  geom_area(position = 'stack') +
+  scale_fill_hutchins(rev = TRUE, labels =  c('Non-traditional Hubs', 'Traditional Hubs')) +
+  scale_y_continuous(labels = dollar_format()) +
+  labs(title = 'R&amp;D expenditures of US Multinationals foreign affiliates') 
+```
+
+```
+## New names:
+## * `` -&gt; ...5
+```
+
+![](ninja_files/figure-html/unnamed-chunk-5-1.png)&lt;!-- --&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

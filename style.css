@@ -1,0 +1,65 @@
+
+/*# sourceMappingURL=app.css.map */
+.interactive-container {
+  display: flex;
+  flex-wrap: wrap;
+}
+.tall{
+  height: 400px;
+}
+.section {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+.title-container{
+  font-weight: bold;
+  font-size: 20px;
+  margin-top: 20px !important;
+  margin-bottom: 10px !important;
+}
+
+.center-align{
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+.y .tick line{
+  opacity: 0.2;
+}
+.x .tick line{
+  opacity: 0;
+}
+.tick text{
+  font-size: 14px;
+}
+.grid line {
+  stroke: #ddd;
+}
+
+	.axis path,
+	.axis line {
+	  fill: none;
+    stroke: black;
+	  shape-rendering: crispEdges;
+	}
+  .y.axis path {
+    display: none;
+  }
+.label{
+  font-size: 11px;
+}
+
+
+/* Desktop Styles */
+@media only screen and (min-width: 961px) {
+  .interactive-container {
+    width: 960px;
+    margin: 0 auto;
+  }
+  .graph1,
+  .graph2{
+    width: 50%
+  }
+
+}
